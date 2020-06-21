@@ -1,3 +1,3 @@
-from src import Data
+from src.Data import *
 if(__name__=="__main__"):
-    print(Data.Data(17,6,2020).dzienTygodniaZDaty())
+    pass

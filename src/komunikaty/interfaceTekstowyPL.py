@@ -1,0 +1,2 @@
+pobranieIntakomunikat="""\
+Podaj liczbę całkowitą: """
