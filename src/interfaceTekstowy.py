@@ -1,6 +1,6 @@
 from src.komunikaty import menuGlownePL as menuGlowne
 from src.komunikaty import interfaceTekstowyPL as interfaceTekstowy
-import src.obslugaDanych;
+import src.Dane;
 def wczytanieInta():
     ok = True
     while(True):
