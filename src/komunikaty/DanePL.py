@@ -1,1 +1,0 @@
-BazaDanychExceptionKomunikat=u'''Wystąpił błąd w bazie danych. Spróbuj na innym zestawie danych. '''

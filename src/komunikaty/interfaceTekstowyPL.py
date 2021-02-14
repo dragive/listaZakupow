@@ -1,2 +1,0 @@
-pobranieIntakomunikat="""\
-Podaj liczbę całkowitą: """
