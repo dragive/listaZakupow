@@ -187,12 +187,12 @@ def list_element(element,id,types='all',hid=True):
             status = ' '
         else:
             status = 'H'
-    if element['Type'] == 'Charge' and types in ('all','corech','ch','rech','coch'):
-        print(f''' {id:4} {status}| {element["Name"]:25} | {element["Amount"]     :6} | {element["Date"]:10} | {element["Description"]:20}''')
-    elif element['Type'] == 'Comment' and types in ('all','corech','coch','core','co'):
-        print(f''' {id:4} {status}| {element["Name"]:25} | {'-----'               :6} | {element["Date"]:10} | {element["Description"]:20}''')
-    elif element['Type'] == 'Return' and types in ('all','corech','rech','core','re'):
-        print(f''' {id:4} {status}| {element["Name"]:25} | {element["Amount"]*(-1):6} | {element["Date"]:10} | {element["Description"]:20}''')
+        if element['Type'] == 'Charge' and types in ('all','corech','ch','rech','coch'):
+            print(f''' {id:4} {status}| {element["Name"]:25} | {element["Amount"]     :6} | {element["Date"]:10} | {element["Description"]:20}''')
+        elif element['Type'] == 'Comment' and types in ('all','corech','coch','core','co'):
+            print(f''' {id:4} {status}| {element["Name"]:25} | {'-----'               :6} | {element["Date"]:10} | {element["Description"]:20}''')
+        elif element['Type'] == 'Return' and types in ('all','corech','rech','core','re'):
+            print(f''' {id:4} {status}| {element["Name"]:25} | {element["Amount"]*(-1):6} | {element["Date"]:10} | {element["Description"]:20}''')
 
 def list_last(cmd=None,n=15):
     log.debug(f'list last start')
