@@ -67,6 +67,8 @@ def execute(cmd=None):
         list_all(cmd)
     elif cmd['type'] == "help":
         print_help(cmd)
+    elif cmd['type'] == 'summary':
+        summary()
     else:
         command_not_found(cmd)
 
@@ -201,6 +203,7 @@ def list_last(cmd=None,n=15):
         log.debug(f'arguments not supported')
         return
     # print(STORAGE)
+    sort_list()
     l = STORAGE['Storage']['IDs']
     columns_to_be_print = []
 
@@ -211,7 +214,7 @@ def list_last(cmd=None,n=15):
             columns_to_be_print.append(i)
             if len(columns_to_be_print) >=n:
                 break
-    columns_to_be_print = reversed(columns_to_be_print)
+    # columns_to_be_print = reversed(columns_to_be_print)
     for i in columns_to_be_print:
         log.debug(f'''Listing: {i} {STORAGE['Storage']['List'][i]}''')
         list_element(STORAGE['Storage']['List'][i],i)
@@ -248,13 +251,14 @@ def list_all(cmd=None):
         print('Arguments not supported')
         log.debug(f'arguments not supported')
         return
+    sort_list()
     l = STORAGE['Storage']['IDs']
     columns_to_be_print = []
     log.debug(f'appending to list to print {15} elements')
     for i in STORAGE['Storage']['IDs']:
         log.debug(f'{i}')
         columns_to_be_print.append(i)
-    columns_to_be_print = reversed(columns_to_be_print)
+    # columns_to_be_print = reversed(columns_to_be_print)
     log.debug(f'start iterating')
     for i in columns_to_be_print:
         log.debug(f'printing {i}')
@@ -296,7 +300,7 @@ def translate_cmds(cmd):
     elif cmd.lower() in ['hi','h','hide']:
         log.debug(f'it is hide')
         return 'hide'
-    elif cmd.lower() in ['l','li','list']:
+    elif cmd.lower() in ['l','li','list','di','ls','sl']:
         log.debug(f'it is list')
         return 'list'
     elif cmd.lower() in ['u','un','unhide']:
@@ -308,9 +312,26 @@ def translate_cmds(cmd):
     elif cmd.lower() in ['h','help']:
         log.debug(f'it is help')
         return 'help'
+    elif cmd.lower() in ['s','summary','su']:
+        log.debug(f'it is summary')
+        return 'summary'
     else:
         log.debug(f'NOT RECOGNIZED')
         return None
+
+def sort_list(asc = True):
+    log.debug(f'starting sorting list asc: {asc}')
+    l = STORAGE['Storage']['IDs']
+    token = True
+    while token:
+        token = False
+        for i in range(len(l)-1):
+            if ( STORAGE['Storage']['List'][l[i]]['Date']>STORAGE['Storage']['List'][l[i+1]]['Date'] and asc) or \
+               ( STORAGE['Storage']['List'][l[i]]['Date']<STORAGE['Storage']['List'][l[i+1]]['Date'] and not asc) :
+                l[i],l[i+1] = l[i+1],l[i]
+                token = True
+    STORAGE['Storage']['IDs']=l
+    log.debug(f'ended sorting list with l: {l}')
 
 def text_terminal():
     log.debug(f'started text_terminal function')
@@ -331,13 +352,43 @@ def text_terminal():
             #print('###',cmd,(cmd[0] is not None ),(not len(cmd[0]['args']) == 0))
             log.debug(f'get command: {cmd}')
             execute_lst(cmd)
-     
+
+def is_linux():
+    pass
+
+def clear():
+    pass
+
+def summary():
+    log.debug('start summary')
+    s = 0.0
+    a = 0.0
+    
+    for i in STORAGE['Storage']['IDs']:
+        element = STORAGE['Storage']['List'][i]
+        if element['Type'] == 'Charge':
+            
+            a += element['Amount']
+        elif element['Type'] == 'Return':
+            s+=element['Amount']
+            
+    print(f'''\
+
+    Sum: {s-a}
+    Abs: {a+s}
+
+    In : {s}
+    Out: {a}\n''')
+    log.debug('end summary')
+
 if __name__ == '__main__':
     log.debug(f'Start main')
-    try:
-        text_terminal()
-    except Exception as ex:
-        log.error(ex)
+    # try:
+    text_terminal()
+    # except Exception as ex:
+    #     log.error(ex)
+    #     print(ex)
+    #     input()
 '''
 {
     'Settings':
