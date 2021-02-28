@@ -334,7 +334,10 @@ def text_terminal():
      
 if __name__ == '__main__':
     log.debug(f'Start main')
-    text_terminal()
+    try:
+        text_terminal()
+    except Exception as ex:
+        log.error(ex)
 '''
 {
     'Settings':
