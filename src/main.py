@@ -80,12 +80,19 @@ def add(cmd=None):
         return
     log.debug(f'Started form in add function')
     type_item = input(f'Type of entry [CHARGE\Ch;Return/R;Comment/Co]: ')
-    if type_item.lower() in ['ch','','charge','c']:
-        type_item = 'Charge'
-    elif type_item.lower() in ['r','rt','return','re','ret']:
-        type_item = 'Return'
-    elif type_item.lower() in ['co','comment','comm','cm']:
-        type_item = 'Comment'
+    while True:
+        if type_item.lower() in ['ch','','charge','c']:
+            type_item = 'Charge'
+        elif type_item.lower() in ['r','rt','return','re','ret']:
+            type_item = 'Return'
+        elif type_item.lower() in ['co','comment','comm','cm']:
+            type_item = 'Comment'
+        else:
+            print(f'Please insert correct value',end='')
+            type_item = input(f'Type of entry [CHARGE\Ch;Return/R;Comment/Co]: ')
+            continue
+        break
+
     name = input(f'Title: ')
     desc = input(f'Description: ')
     date = input(f'Date: ')
@@ -205,16 +212,17 @@ def list_last(cmd=None,n=15):
     # print(STORAGE)
     sort_list()
     l = STORAGE['Storage']['IDs']
+    l = reversed(l)
     columns_to_be_print = []
 
-    for i in STORAGE['Storage']['IDs']:
+    for i in l:
         # print(STORAGE)
         if STORAGE['Storage']['List'][i]['Hidden']==False:
             log.debug(f'Added to print list: {i}')
             columns_to_be_print.append(i)
             if len(columns_to_be_print) >=n:
                 break
-    # columns_to_be_print = reversed(columns_to_be_print)
+    columns_to_be_print = reversed(columns_to_be_print)
     for i in columns_to_be_print:
         log.debug(f'''Listing: {i} {STORAGE['Storage']['List'][i]}''')
         list_element(STORAGE['Storage']['List'][i],i)
@@ -375,8 +383,8 @@ def summary():
     print(f'''\
 
     Sum: {s-a}
+    
     Abs: {a+s}
-
     In : {s}
     Out: {a}\n''')
     log.debug('end summary')
