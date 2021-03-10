@@ -3,6 +3,9 @@ import json
 from datetime import datetime
 import random
 import logging 
+from debug import *
+import os, sys
+DEBUG = True
 start_date = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %H:%M:%S',filename=f'logs/run {start_date}.log')
 log = logging.getLogger(__name__)
@@ -20,25 +23,32 @@ init_file={
         'List':{
         }
     }
-
 }
-STORAGE={}
+
+
+Reminders = []
+Storage={}
 def parser(name="storage.json"):
-    global STORAGE
+    global Storage
+    if DEBUG: 
+        if Storage == {}:
+                Storage = get_INIT_DEBUG_FILE()
+        return 
+    
     try:
         with open(name) as file:
             log.debug(f'opened file {name}')
             value = json.load(file)
     except Exception as ex:
         log.debug(f'Exception in parser')
-        STORAGE = init_file
+        Storage = init_file
         return 
-    STORAGE =  value
+    Storage =  value
 
 def outer(name="storage.json"):
     log.debug(f'Started outer')
     with open(name,'w+') as file:
-        json.dump(STORAGE, file)
+        json.dump(Storage, file)
     log.debug(f'Ended outer')
 
 def execute(cmd=None):
@@ -109,20 +119,104 @@ def add(cmd=None):
             break
     hidden = False
     log.debug(f'End of form in add function')
-    STORAGE['Storage']['IDs'].append(str(STORAGE['Settings']['ID_next']))
+    Storage['Storage']['IDs'].append(str(Storage['Settings']['ID_next']))
     if type_item not in ('Comment'):
-        STORAGE['Storage']['List'][STORAGE['Settings']['ID_next']] = {
+        Storage['Storage']['List'][Storage['Settings']['ID_next']] = {
         'Type':type_item,'Name':name, 
         'Description':desc,'Date':date,
         'Amount':amount,'Hidden':hidden
     }
     else: 
-        STORAGE['Storage']['List'][STORAGE['Settings']['ID_next']] = {
+        Storage['Storage']['List'][Storage['Settings']['ID_next']] = {
         'Type':type_item,'Name':name, 
         'Description':desc,'Date':date,
         'Hidden':hidden
     }
-    STORAGE['Settings']['ID_next']+=1
+    Storage['Settings']['ID_next']+=1
+
+def add_budget(cmd = None):
+    log.debug(f'Started add_budget function')
+    if cmd is None or not len(cmd['args']) == 0:
+        print(f'Args not supported')
+        log.debug(f'Args not supported')
+        return
+    log.debug(f'Started form in add_budget function')
+    id = get_random_id(Storage['Storage']["Budgets"]['_'])
+
+    title = input(f'Title: ')
+    desc = input(f'Description: ')
+    date = datetime.today().strftime('%Y-%m-%d')
+
+    minimum = input('Put lower bound when the notyfication will appear\nor leave blank for no constraint: ')
+    while True:
+        try:
+            if minimum == '':
+                minimum = None
+                break
+            minimum = float('.'.join(minimum.split(',')))
+            break
+        except:
+            minimum = input('Place correct number or leave empty: ')
+
+    maximum = input('Put higher bound when the notyfication will appear\nor leave blank for no constraint: ')
+    while True:
+        try:
+            if maximum == '':
+                maximum = None
+                break
+            maximum = float('.'.join(maximum.split(',')))
+            break
+        except:
+            maximum = input('Place correct number or leave empty: ')
+
+    hidden = False
+    log.debug(f'End of form in add_budget function')
+    Storage['Storage']["Budgets"]['_'].append(id)
+    Storage['Storage']["Budgets"][id] = {
+        "Title": title,
+        "Description": desc,
+        "IncludeBudgets":[],
+        "Reminders": [minimum, maximum],
+        "DateOfCreation":date,
+        "Hidden": hidden,
+        "LoT": [] 
+    }
+    
+
+'''
+{
+    'Settings':
+        {"ID_next": 1,
+        'Language': 'Eng',
+        'Version':2.0},
+    'Storage': {
+        'IDs':[0],
+        'List':{
+            '0': {'Type':'Charge','Name':'TEST NAME TEST', 
+                'Description':'Lorem ipsum et ####','Date':'2137-04-24',
+                'Amount':420,'Hidden':False}
+        },
+        "Budgets":{
+            '_': ['main'] #list of budgets
+            '0': {
+                "Title":"Main",
+                "Description": "lorem ipsum bla bla bla"
+                "IncludeBudgets":[],
+                "Reminders": [min, max],
+                "LoT": ['0'] #List of items
+            }
+        }
+    }
+}'''
+
+def get_random_id(l:list):
+    import random
+    offset = 0
+    ret = str(random.randrange(0,10))
+    while ret in l:
+        offset +=5
+        ret = str(random.randrange(0+offset,10+offset))
+    return ret
 
 def delete(cmd=None):
     log.debug(f'Start of delete function')
@@ -134,7 +228,7 @@ def delete(cmd=None):
         try:
             if get_id =='q':
                 return
-            if get_id not in STORAGE["Storage"]['IDs']:
+            if get_id not in Storage["Storage"]['IDs']:
                 raise Exception()
         except Exception as ex:
             get_id = input('Please insert correct ID: ')
@@ -154,13 +248,13 @@ def delete(cmd=None):
         log.debug(f'Canceled')
         return
     log.debug(f'Validated')
-    STORAGE['Storage']['IDs'].remove(get_id)
+    Storage['Storage']['IDs'].remove(get_id)
     #STORAGE['Storage']['List'].pop(get_id)
     print('done')
     
 def hide(cmd=None):
     log.debug(f'Start hide')
-    global STORAGE
+    global Storage
     if cmd is None or not len(cmd['args']) == 0:
         print('Arguments not supported')
         return
@@ -169,14 +263,14 @@ def hide(cmd=None):
         try:
             if get_id =='q':
                 return
-            if get_id not in STORAGE["Storage"]['IDs']:
+            if get_id not in Storage["Storage"]['IDs']:
                 raise Exception()
         except Exception as ex:
             get_id = input('Please insert correct ID: ')
             continue
         break
     log.debug(f'Gathered id')
-    STORAGE['Storage']['List'][get_id]['Hidden']=True
+    Storage['Storage']['List'][get_id]['Hidden']=True
     log.debug(f'Hidded')
 
 def list_element(element,id,types='all',hid=True):
@@ -211,21 +305,21 @@ def list_last(cmd=None,n=15):
         return
     # print(STORAGE)
     sort_list()
-    l = STORAGE['Storage']['IDs']
+    l = Storage['Storage']['IDs']
     l = reversed(l)
     columns_to_be_print = []
 
     for i in l:
         # print(STORAGE)
-        if STORAGE['Storage']['List'][i]['Hidden']==False:
+        if Storage['Storage']['List'][i]['Hidden']==False:
             log.debug(f'Added to print list: {i}')
             columns_to_be_print.append(i)
             if len(columns_to_be_print) >=n:
                 break
     columns_to_be_print = reversed(columns_to_be_print)
     for i in columns_to_be_print:
-        log.debug(f'''Listing: {i} {STORAGE['Storage']['List'][i]}''')
-        list_element(STORAGE['Storage']['List'][i],i)
+        log.debug(f'''Listing: {i} {Storage['Storage']['List'][i]}''')
+        list_element(Storage['Storage']['List'][i],i)
         
 def unhide(cmd=None):
     log.debug(f'started unhide')
@@ -239,14 +333,14 @@ def unhide(cmd=None):
         try:
             if get_id =='q':
                 return
-            if get_id not in STORAGE["Storage"]['IDs']:
+            if get_id not in Storage["Storage"]['IDs']:
                 raise Exception()
         except Exception as ex:
             get_id = input('Please insert correct ID: ')
             continue
         break
     log.debug(f'end of form')
-    STORAGE['Storage']['List'][get_id]['Hidden']=False
+    Storage['Storage']['List'][get_id]['Hidden']=False
     log.debug(f'end of unhide')
 
 def command_not_found(cmd):
@@ -260,17 +354,17 @@ def list_all(cmd=None):
         log.debug(f'arguments not supported')
         return
     sort_list()
-    l = STORAGE['Storage']['IDs']
+    l = Storage['Storage']['IDs']
     columns_to_be_print = []
     log.debug(f'appending to list to print {15} elements')
-    for i in STORAGE['Storage']['IDs']:
+    for i in Storage['Storage']['IDs']:
         log.debug(f'{i}')
         columns_to_be_print.append(i)
     # columns_to_be_print = reversed(columns_to_be_print)
     log.debug(f'start iterating')
     for i in columns_to_be_print:
         log.debug(f'printing {i}')
-        list_element(STORAGE['Storage']['List'][i],i,hid=False)
+        list_element(Storage['Storage']['List'][i],i,hid=False)
 
 def print_help(cmd = None):
     log.debug(f'help function start')
@@ -283,7 +377,7 @@ hide
 unhide
 ''')
     log.debug('help function ends')
-    log.debug(f'{STORAGE}')
+    log.debug(f'{Storage}')
 
 def execute_lst(cmd_list):
     log.debug(f'execute_lst dunction start')
@@ -329,16 +423,16 @@ def translate_cmds(cmd):
 
 def sort_list(asc = True):
     log.debug(f'starting sorting list asc: {asc}')
-    l = STORAGE['Storage']['IDs']
+    l = Storage['Storage']['IDs']
     token = True
     while token:
         token = False
         for i in range(len(l)-1):
-            if ( STORAGE['Storage']['List'][l[i]]['Date']>STORAGE['Storage']['List'][l[i+1]]['Date'] and asc) or \
-               ( STORAGE['Storage']['List'][l[i]]['Date']<STORAGE['Storage']['List'][l[i+1]]['Date'] and not asc) :
+            if ( Storage['Storage']['List'][l[i]]['Date']>Storage['Storage']['List'][l[i+1]]['Date'] and asc) or \
+               ( Storage['Storage']['List'][l[i]]['Date']<Storage['Storage']['List'][l[i+1]]['Date'] and not asc) :
                 l[i],l[i+1] = l[i+1],l[i]
                 token = True
-    STORAGE['Storage']['IDs']=l
+    Storage['Storage']['IDs']=l
     log.debug(f'ended sorting list with l: {l}')
 
 def text_terminal():
@@ -362,7 +456,8 @@ def text_terminal():
             execute_lst(cmd)
 
 def is_linux():
-    pass
+    return sys.platform in [ 'linux' , 'linux2' ]
+
 
 def clear():
     pass
@@ -372,8 +467,8 @@ def summary():
     s = 0.0
     a = 0.0
     
-    for i in STORAGE['Storage']['IDs']:
-        element = STORAGE['Storage']['List'][i]
+    for i in Storage['Storage']['IDs']:
+        element = Storage['Storage']['List'][i]
         if element['Type'] == 'Charge':
             
             a += element['Amount']
@@ -391,18 +486,26 @@ def summary():
 
 if __name__ == '__main__':
     log.debug(f'Start main')
-    # try:
-    text_terminal()
-    # except Exception as ex:
-    #     log.error(ex)
-    #     print(ex)
-    #     input()
+    try:
+        text_terminal()
+    except Exception as ex:
+        log.error(ex)
+        print(ex)
+        raise ex
+
+
+
+
+
+
+
+
 '''
 {
     'Settings':
         {"ID_next": 1,
         'Language': 'Eng',
-        'Version':0.1},
+        'Version':1.0},
     'Storage': {
         'IDs':[0],
         'List':{
